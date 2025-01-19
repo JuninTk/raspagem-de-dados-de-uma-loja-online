@@ -1,0 +1,49 @@
+import requests
+from bs4 import BeautifulSoup
+import pandas as pd
+
+#Função para raspar os dados
+def obter_precos(url):
+    resposta = requests.get(url)
+    
+    if resposta.status_code != 200:
+        print(f"Erro ao acessar a página: {url}")
+        return []
+    
+    sopa = BeautifulSoup(resposta.text, 'html.parser')
+    
+    #Encontrando os dados de preço e nome do produto
+    produtos = sopa.find_all('div', class_='product-item')
+    
+    dados_produtos = []
+    
+    for produto in produtos:
+        nome = produto.find('span', class_='product-name').get_text(strip=True)
+        preco = produto.find('span', class_='price').get_text(strip=True)
+        
+        dados_produtos.append({
+            'Nome do Produto': nome,
+            'Preço': preco
+        })
+    
+    return dados_produtos
+
+#URLs de exemplo
+urls = [
+    "https://www.exemplo.com/produtos/categoria1",
+    "https://www.exemplo.com/produtos/categoria2"
+]
+
+#Coletando os dados
+todos_produtos = []
+for url in urls:
+    produtos = obter_precos(url)
+    todos_produtos.extend(produtos)
+
+#Criando um DataFrame para análise
+df = pd.DataFrame(todos_produtos)
+
+#Salvando o DataFrame em um arquivo Excel
+df.to_excel("relatorio_precos.xlsx", index=False)
+
+print("Relatório gerado com sucesso!")
